@@ -20,16 +20,20 @@ Build first FastMCP Server.
 mcp = FastMCP(...)
 ```
 
-## Tool
+### Tool
 
+```python
 @mcp.tool()
 def get_cluster_info():
+```
 
 ---
 
-## Run
+### Run
 
+```bash
 python3 mcp/kubernetes_server.py
+```
 
 ___
 
@@ -63,8 +67,8 @@ npx @modelcontextprotocol/inspector
 
 ## Lessons Learned
 
-FastMCP automatically discovers tools.
-Tool docstrings become descriptions.
-Streamable HTTP transport uses Uvicorn.
+- FastMCP automatically discovers tools.
+- Tool docstrings become descriptions.
+- Streamable HTTP transport uses Uvicorn.
 
 ---

@@ -39,8 +39,8 @@ client = genai.Client(...)
 ---
 
 ## What I Learned
-LangChain is just an orchestration framework.
-Gemini SDK is different from LangChain.
-Environment variables should never be committed.
+- LangChain is just an orchestration framework.
+- Gemini SDK is different from LangChain.
+- Environment variables should never be committed.
 
 ---
