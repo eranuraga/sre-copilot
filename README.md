@@ -1,1 +1,1 @@
-# sre-copilo
+# sre-copilot
