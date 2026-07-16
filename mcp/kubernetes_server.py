@@ -11,6 +11,20 @@ def get_cluster_info() -> dict:
     "nodes": 3
   }
 
+@mcp.tool()
+def get_pods():
+  """Return mocked Kubernetes cluster information."""
+  return [
+        {
+            "name": "checkout",
+            "status": "Running"
+        },
+        {
+            "name": "payment",
+            "status": "CrashLoopBackOff"
+        }
+    ]
+
 if __name__ == "__main__":
   mcp.run(
     transport="streamable-http"
