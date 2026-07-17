@@ -21,6 +21,7 @@ async def main():
         print("\nSession Initialized")
         print("\nGetting list of tools...")
         tools = await session.list_tools()
+        print(f"Tools type: {type(tools)}")
 
         for tools in tools.tools:
            print(f"{tools.name}")
