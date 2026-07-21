@@ -1,11 +1,12 @@
 """
 SRE Copilot Agent
 
-This file will become the entry point
-for our AI Agent.
+When the user asks about a Kubernetes service or workload being unhealthy,
+you must investigate using the available tools before answering.
+Prefer pods, events, nodes and namespaces as evidence.
+Do not answer from general knowledge alone.
 """
 
-import asyncio
 from langchain.agents import create_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -15,15 +16,19 @@ load_dotenv()
 
 MCP_SERVER_URL = "http://127.0.0.1:8000/mcp"
 
-async def main():
-    #1 Create the model
+agent = None  # We create this once, then reuse it for every question.
+
+
+async def create_sre_agent():
+    """Connect to the model and Kubernetes tools."""
+    global agent
+
     model = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
-        temperature=0
-        )
-    
-    #2 Connect to MCP Servers and Get Tools as Langchain Tools
-    mcp_client = MultiServerMCPClient(
+        temperature=0,
+    )
+
+    client = MultiServerMCPClient(
         {
             "kubernetes": {
                 "transport": "streamable_http",
@@ -31,24 +36,25 @@ async def main():
             }
         }
     )
-    tools = await mcp_client.get_tools()
+    tools = await client.get_tools()
 
-    #3 Create the agent
     agent = create_agent(model, tools)
 
-    #4 Ask a question 
+
+async def ask_agent(question: str):
+    """Send one question to the ready agent and return just its text."""
+    if agent is None:
+        raise RuntimeError("Run create_sre_agent() before asking a question.")
+
     result = await agent.ainvoke(
-        {
-            "messages": 
-            [{"role": "user",
-              "content": "Which Cluster I'm connected to ?"
-              }]
-        }
+        {"messages": [{"role": "user", "content": question}]}
     )
-    print(result["messages"][-1].content)
 
+    content = result["messages"][-1].content
 
-if __name__ == "__main__":
-    asyncio.run(main())
+    # Gemini may return either plain text or a list of content blocks.
+    if isinstance(content, str):
+        return content
 
-
+    # The answer is stored here. Other fields, such as "extras", are metadata.
+    return content[0]["text"]
