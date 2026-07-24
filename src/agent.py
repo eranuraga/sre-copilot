@@ -1,16 +1,14 @@
 """
 SRE Copilot Agent
-
-When the user asks about a Kubernetes service or workload being unhealthy,
-you must investigate using the available tools before answering.
-Prefer pods, events, nodes and namespaces as evidence.
-Do not answer from general knowledge alone.
 """
 
 from langchain.agents import create_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from dotenv import load_dotenv
+
+from prompts import SYSTEM_PROMPT
+from skills import load_skill
 
 load_dotenv()
 
@@ -27,7 +25,7 @@ async def create_sre_agent():
         model="gemini-2.5-flash",
         temperature=0,
     )
-
+    print("Connected to Gemini        ✅")
     client = MultiServerMCPClient(
         {
             "kubernetes": {
@@ -36,9 +34,23 @@ async def create_sre_agent():
             }
         }
     )
+    print("Connected to MCP Server    ✅")
     tools = await client.get_tools()
+    print(f"Loaded Tools               {len(tools)}")
+    print("Type 'exit' to quit.")
+    print("========================================")
+    
+    active_skill = load_skill("kubernetes-incident")
+    system_prompt = f"""{SYSTEM_PROMPT}
 
-    agent = create_agent(model, tools)
+    ---
+
+    # Skill: kubernetes-incident
+
+    {active_skill}
+    """
+
+    agent = create_agent(model, tools, system_prompt=system_prompt,)
 
 
 async def ask_agent(question: str):
@@ -58,3 +70,12 @@ async def ask_agent(question: str):
 
     # The answer is stored here. Other fields, such as "extras", are metadata.
     return content[0]["text"]
+
+async def watch_agent(question: str):
+    input_payload = {
+        "messages": [
+            {"role": "user", "content": question}
+        ]
+    }
+    async for event in agent.astream_events(input_payload):
+        print(event)
